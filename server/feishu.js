@@ -170,22 +170,31 @@ export async function applyUrgentWithFallback(token, messageId, userId, urgent, 
   return { type: urgent, fallback: false };
 }
 
+/** 把可选的路人手机号拼进消息，方便车主主动联系。 */
+function buildMessage(text, phone) {
+  if (!phone) return text;
+  return `${text}\n如需联系我：${phone}`;
+}
+
 /**
  * 挪车提醒主流程（带降级）：
  * 1. 配了 App 凭据 + 接收人 → 私聊 + 加急（FEISHU_URGENT=auto：电话优先、失败降级应用内加急）；
  * 2. 仅配 Webhook → 发群消息（无加急）；
  * 3. 都未配 → 抛错提示。
+ * @param {string} text 话术
+ * @param {string} [phone] 可选：路人手机号，拼进消息让车主回拨
  */
-export async function sendMoveReminder(text) {
+export async function sendMoveReminder(text, phone = '') {
   const appId = env('FEISHU_APP_ID');
   const receiveId = env('FEISHU_RECEIVE_ID');
   const webhookUrl = env('FEISHU_WEBHOOK_URL');
   const urgent = env('FEISHU_URGENT') || 'auto';
+  const message = buildMessage(text, phone);
 
   if (appId && receiveId) {
     const token = await getTenantAccessToken();
     const receiveIdType = env('FEISHU_RECEIVE_ID_TYPE') || 'open_id';
-    const messageId = await sendAppMessage(token, receiveId, text, receiveIdType);
+    const messageId = await sendAppMessage(token, receiveId, message, receiveIdType);
 
     let urgentResult = { type: 'none', fallback: false };
     if (urgent !== 'none') {
@@ -207,7 +216,7 @@ export async function sendMoveReminder(text) {
   }
 
   if (webhookUrl) {
-    await sendViaWebhook(text);
+    await sendViaWebhook(message);
     return { via: 'webhook', urgent: 'none', urgentFallback: false, urgentError: null };
   }
 

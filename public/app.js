@@ -6,6 +6,7 @@
   const els = {
     chips: document.querySelectorAll('.chip'),
     customInput: document.getElementById('customInput'),
+    phoneInput: document.getElementById('phoneInput'),
     sendBtn: document.getElementById('sendBtn'),
     sendText: document.querySelector('.btn-primary__text'),
     spinner: document.querySelector('#sendBtn .spinner'),
@@ -84,29 +85,31 @@
 
   els.sendBtn.addEventListener('click', async () => {
     const text = getSelectedText();
+    const phone = els.phoneInput.value.trim();
+
+    // 手机号可选；填了则做轻校验（11 位，1 开头）
+    if (phone && !/^1\d{10}$/.test(phone)) {
+      showToast('请输入正确的手机号', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch('/api/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, phone }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.ok === false) {
-        throw new Error(data.error || '发送失败，请稍后重试');
+        throw new Error(data.error || '通知失败');
       }
       setLoading(false);
-      const labels = {
-        phone: '已电话加急车主',
-        app: data.urgentFallback ? '电话额度不足，已转应用内加急' : '已应用内加急车主',
-        sms: '已短信加急车主',
-      };
-      const urgentLabel = labels[data.urgent];
-      setSuccess(urgentLabel || '已发送到车主飞书');
-      showToast(urgentLabel ? `已发送，${urgentLabel}` : '已发送到车主飞书', 'success');
+      setSuccess('已通知车主');
+      showToast('已通知车主', 'success');
     } catch (err) {
       setLoading(false);
-      showToast(err.message || '发送失败，请稍后重试', 'error');
+      showToast('通知失败，请稍后重试', 'error');
     }
   });
 

@@ -277,6 +277,10 @@ input {
   color: #9ca3af;
 }
 
+.phone-input {
+  margin-top: 10px;
+}
+
 /* ===== Buttons ===== */
 .btn-primary {
   position: relative;
