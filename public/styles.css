@@ -558,3 +558,110 @@ input {
     bottom: 24px;
   }
 }
+
+/* ===== 液态玻璃（Liquid Glass） ===== */
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(120% 70% at 12% 0%, rgba(229, 50, 45, 0.16), transparent 50%),
+    radial-gradient(130% 70% at 88% 18%, rgba(0, 166, 81, 0.14), transparent 52%),
+    radial-gradient(120% 90% at 50% 100%, rgba(99, 102, 241, 0.15), transparent 55%),
+    linear-gradient(180deg, #f7f8fc, #edf0f6);
+}
+
+.card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28));
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 12px 32px rgba(17, 24, 39, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.hero {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 241, 240, 0.45));
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-left: 4px solid var(--accent-red);
+  box-shadow:
+    0 12px 32px rgba(17, 24, 39, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, rgba(229, 50, 45, 0.88), rgba(193, 27, 24, 0.82));
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 10px 24px rgba(229, 50, 45, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary.is-success {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 10px 24px rgba(22, 163, 74, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.28));
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 8px 20px rgba(17, 24, 39, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.chip {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.3));
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.chip.is-active {
+  background: linear-gradient(135deg, rgba(229, 50, 45, 0.9), rgba(193, 27, 24, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 6px 16px rgba(229, 50, 45, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.custom-input {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+
+.sheet {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.62));
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-bottom: none;
+}
+
+.modal {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.65));
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+/* 遮罩层加毛玻璃，衬托玻璃质感 */
+.sheet-mask,
+.modal-mask {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.28);
+}

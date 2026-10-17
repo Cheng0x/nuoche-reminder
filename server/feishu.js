@@ -6,18 +6,48 @@ function env(name) {
   return (process.env[name] || '').trim();
 }
 
+/** 车辆信息（与页面展示保持一致，用于卡片底部备注）。 */
+const CAR_INFO = '小米 SU7 Pro · 鲁C·DN0940 · 赤霞红';
+
+/** 转义 markdown 特殊字符，避免用户输入破坏飞书卡片。 */
+function escapeMd(s) {
+  return String(s).replace(/[*_<>`\\[\]()]/g, (ch) => '\\' + ch);
+}
+
+/** 构建飞书消息卡片（interactive）。 */
+function buildCard(text, phone) {
+  const lines = [`**${escapeMd(text)}**`];
+  if (phone) lines.push(`📞 如需联系我：${phone}`);
+
+  return {
+    config: { wide_screen_mode: true },
+    header: {
+      template: 'red',
+      title: { tag: 'plain_text', content: '🚗 挪车提醒' },
+    },
+    elements: [
+      { tag: 'div', text: { tag: 'lark_md', content: lines.join('\n') } },
+      { tag: 'hr' },
+      { tag: 'note', elements: [{ tag: 'plain_text', content: CAR_INFO }] },
+    ],
+  };
+}
+
 /**
  * 飞书自定义机器人 Webhook 发送（发到群）。
  * 若配置了签名密钥，按官方规则计算 sign：
  *   stringToSign = `${timestamp}\n${secret}`
  *   sign = base64(HMAC-SHA256(key=secret, msg=stringToSign))
  */
-export async function sendViaWebhook(text) {
+export async function sendViaWebhook(text, phone) {
   const url = env('FEISHU_WEBHOOK_URL');
   if (!url) throw new Error('FEISHU_WEBHOOK_URL 未配置');
 
   const secret = env('FEISHU_WEBHOOK_SECRET');
-  const payload = { msg_type: 'text', content: { text } };
+  const payload = {
+    msg_type: 'interactive',
+    content: JSON.stringify(buildCard(text, phone)),
+  };
 
   if (secret) {
     const timestamp = Math.floor(Date.now() / 1000);
@@ -65,7 +95,7 @@ export async function getTenantAccessToken() {
 }
 
 /** 通过 im/v1/messages 向车主发私聊消息，返回 message_id。 */
-export async function sendAppMessage(token, receiveId, text, receiveIdType = 'open_id') {
+export async function sendAppMessage(token, receiveId, text, phone, receiveIdType = 'open_id') {
   const url =
     `${FEISHU_OPEN_HOST}/open-apis/im/v1/messages` +
     `?receive_id_type=${encodeURIComponent(receiveIdType)}`;
@@ -77,8 +107,8 @@ export async function sendAppMessage(token, receiveId, text, receiveIdType = 'op
     },
     body: JSON.stringify({
       receive_id: receiveId,
-      msg_type: 'text',
-      content: JSON.stringify({ text }),
+      msg_type: 'interactive',
+      content: JSON.stringify(buildCard(text, phone)),
     }),
   });
   const body = await res.json().catch(() => ({}));
@@ -170,12 +200,6 @@ export async function applyUrgentWithFallback(token, messageId, userId, urgent, 
   return { type: urgent, fallback: false };
 }
 
-/** 把可选的路人手机号拼进消息，方便车主主动联系。 */
-function buildMessage(text, phone) {
-  if (!phone) return text;
-  return `${text}\n如需联系我：${phone}`;
-}
-
 /**
  * 挪车提醒主流程（带降级）：
  * 1. 配了 App 凭据 + 接收人 → 私聊 + 加急（FEISHU_URGENT=auto：电话优先、失败降级应用内加急）；
@@ -189,12 +213,11 @@ export async function sendMoveReminder(text, phone = '') {
   const receiveId = env('FEISHU_RECEIVE_ID');
   const webhookUrl = env('FEISHU_WEBHOOK_URL');
   const urgent = env('FEISHU_URGENT') || 'auto';
-  const message = buildMessage(text, phone);
 
   if (appId && receiveId) {
     const token = await getTenantAccessToken();
     const receiveIdType = env('FEISHU_RECEIVE_ID_TYPE') || 'open_id';
-    const messageId = await sendAppMessage(token, receiveId, message, receiveIdType);
+    const messageId = await sendAppMessage(token, receiveId, text, phone, receiveIdType);
 
     let urgentResult = { type: 'none', fallback: false };
     if (urgent !== 'none') {
@@ -216,7 +239,7 @@ export async function sendMoveReminder(text, phone = '') {
   }
 
   if (webhookUrl) {
-    await sendViaWebhook(message);
+    await sendViaWebhook(text, phone);
     return { via: 'webhook', urgent: 'none', urgentFallback: false, urgentError: null };
   }
 
