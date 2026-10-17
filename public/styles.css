@@ -412,11 +412,13 @@ input {
   z-index: 50;
   opacity: 0;
   transition: opacity 0.26s ease;
+  display: none;
 }
 
 .sheet-mask.is-open,
 .modal-mask.is-open {
   opacity: 1;
+  display: block;
 }
 
 .sheet {
@@ -502,10 +504,13 @@ input {
 
 /* ===== Modal (买同款) ===== */
 .modal-mask {
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+}
+
+.modal-mask.is-open {
+  display: flex;
 }
 
 .modal {
