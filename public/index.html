@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#E5322D" />
+  <meta name="description" content="小米 SU7 Pro 挪车提醒，一键联系车主" />
+  <title>挪车提醒 · 小米 SU7 Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <!-- 顶部品牌区 -->
+    <header class="header">
+      <div class="header__title">
+        <span class="header__emoji" aria-hidden="true">🚗</span>
+        <div>
+          <h1 class="header__name">挪车提醒</h1>
+          <p class="header__sub">停车挡道 · 一键联系车主</p>
+        </div>
+      </div>
+      <span class="badge badge--red">SU7 Pro</span>
+    </header>
+
+    <!-- 车辆信息卡 -->
+    <section class="card vehicle" aria-label="车辆信息">
+      <div class="vehicle__top">
+        <div>
+          <div class="vehicle__brand">小米 SU7 Pro</div>
+          <div class="vehicle__label">车身颜色</div>
+        </div>
+        <span class="color-tag"><span class="color-tag__dot" aria-hidden="true"></span>赤霞红</span>
+      </div>
+      <div class="plate" aria-label="车牌号 鲁CDN0940 新能源绿牌">
+        <span class="plate__prov">鲁</span>
+        <span class="plate__dot" aria-hidden="true">·</span>
+        <span class="plate__rest">CDN0940</span>
+      </div>
+    </section>
+
+    <!-- 挡路抱歉 -->
+    <section class="hero">
+      <h2 class="hero__title">挡路抱歉</h2>
+      <p class="hero__desc">给您添麻烦了，点击下方按钮即可联系我挪车</p>
+    </section>
+
+    <!-- 话术选择 -->
+    <section class="card picker">
+      <h3 class="section-title">选择发送内容</h3>
+      <div class="chips" id="chips" role="radiogroup" aria-label="常用话术">
+        <button class="chip" role="radio" data-text="麻烦挪一下车">麻烦挪一下车</button>
+        <button class="chip" role="radio" data-text="挡住出入口了">挡住出入口了</button>
+        <button class="chip" role="radio" data-text="车灯没关">车灯没关</button>
+        <button class="chip" role="radio" data-text="我要出去了">我要出去了</button>
+      </div>
+      <input
+        class="custom-input"
+        id="customInput"
+        type="text"
+        maxlength="100"
+        placeholder="或输入你想说的话…"
+        aria-label="自定义文案"
+      />
+    </section>
+
+    <!-- 主 CTA -->
+    <button class="btn-primary" id="sendBtn" type="button">
+      <span class="btn-primary__text">发送挪车提醒</span>
+      <span class="spinner" hidden aria-hidden="true"></span>
+    </button>
+
+    <!-- 12123 -->
+    <button class="btn-secondary" id="yizhengBtn" type="button">交警 12123 一键挪车</button>
+
+    <!-- 买同款 -->
+    <button class="btn-link" id="buyBtn" type="button">买同款 · 小米汽车</button>
+
+    <footer class="footer">扫码即可联系我 · 文明停车，方便你我</footer>
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- 12123 底部弹窗 -->
+  <div class="sheet-mask" id="sheetMask" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet__grabber" aria-hidden="true"></div>
+      <h2 class="sheet__title" id="sheetTitle">交管 12123 一键挪车</h2>
+      <ol class="steps">
+        <li class="step">
+          <span class="step__num" aria-hidden="true">1</span>
+          <div class="step__body"><b>打开「交管 12123」APP</b><p>在应用商店搜索安装并登录。</p></div>
+        </li>
+        <li class="step">
+          <span class="step__num" aria-hidden="true">2</span>
+          <div class="step__body"><b>首页点击「一键挪车」</b><p>进入挪车申请页面。</p></div>
+        </li>
+        <li class="step">
+          <span class="step__num" aria-hidden="true">3</span>
+          <div class="step__body"><b>输入对方车牌号</b><p>填写 <code>鲁CDN0940</code>，选择车辆类型。</p></div>
+        </li>
+        <li class="step">
+          <span class="step__num" aria-hidden="true">4</span>
+          <div class="step__body"><b>提交申请</b><p>交管部门将通过短信/电话通知车主尽快挪车。</p></div>
+        </li>
+      </ol>
+      <button class="btn-primary btn-primary--sheet" id="sheetClose" type="button">我知道了</button>
+    </div>
+  </div>
+
+  <!-- 买同款弹窗 -->
+  <div class="modal-mask" id="modalMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 class="modal__title" id="modalTitle">买同款 · 小米汽车</h2>
+      <img class="modal__img" src="assets/referral.svg" alt="小米汽车内推图片" />
+      <button class="btn-primary btn-primary--sheet" id="modalClose" type="button">关闭</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
