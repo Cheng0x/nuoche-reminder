@@ -91,9 +91,9 @@ export async function sendAppMessage(token, receiveId, text, receiveIdType = 'op
 /**
  * 对已发送的消息设置加急（飞书开放平台，均为 PATCH 方法）。
  * urgentType 对应不同端点：
- *   app   → urgent_app   （应用内加急）
+ *   app   → urgent_app   （应用内加急，免费无限）
  *   sms   → urgent_sms   （短信加急）
- *   phone → urgent_phone （电话加急）
+ *   phone → urgent_phone （电话加急，消耗企业配额）
  */
 const URGENT_ENDPOINTS = {
   app: 'urgent_app',
@@ -101,9 +101,18 @@ const URGENT_ENDPOINTS = {
   phone: 'urgent_phone',
 };
 
+/** 加急相关错误，携带飞书返回的业务错误码（如 230024=加急额度超限）。 */
+export class UrgentError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.name = 'UrgentError';
+    this.code = code;
+  }
+}
+
 export async function applyUrgent(token, messageId, userId, urgentType = 'phone', userIdType = 'open_id') {
   const endpoint = URGENT_ENDPOINTS[urgentType];
-  if (!endpoint) throw new Error(`不支持的加急类型：${urgentType}`);
+  if (!endpoint) throw new UrgentError(`不支持的加急类型：${urgentType}`, 'INVALID_TYPE');
 
   const url =
     `${FEISHU_OPEN_HOST}/open-apis/im/v1/messages/${messageId}/${endpoint}` +
@@ -118,14 +127,52 @@ export async function applyUrgent(token, messageId, userId, urgentType = 'phone'
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok || body.code !== 0) {
-    throw new Error(`设置加急失败：${body.msg || res.statusText || '未知错误'}`);
+    throw new UrgentError(
+      `设置加急失败：${body.msg || res.statusText || '未知错误'}`,
+      body.code ?? res.status
+    );
   }
   return true;
 }
 
 /**
+ * 按策略加急，支持自动降级：
+ * - auto（推荐）：电话加急优先，失败（额度超限/无权限等）自动降级为应用内加急（免费无限）；
+ * - phone/sms/app：仅指定类型，失败抛错；
+ * - none：不加急。
+ * 返回实际生效的加急类型与是否发生了降级。
+ */
+export async function applyUrgentWithFallback(token, messageId, userId, urgent, userIdType = 'open_id') {
+  if (urgent === 'none') {
+    return { type: 'none', fallback: false };
+  }
+
+  if (urgent === 'auto') {
+    try {
+      await applyUrgent(token, messageId, userId, 'phone', userIdType);
+      return { type: 'phone', fallback: false };
+    } catch (err) {
+      try {
+        await applyUrgent(token, messageId, userId, 'app', userIdType);
+        return {
+          type: 'app',
+          fallback: true,
+          fallbackReason: err.message,
+          code: err.code,
+        };
+      } catch (err2) {
+        throw err2;
+      }
+    }
+  }
+
+  await applyUrgent(token, messageId, userId, urgent, userIdType);
+  return { type: urgent, fallback: false };
+}
+
+/**
  * 挪车提醒主流程（带降级）：
- * 1. 配了 App 凭据 + 接收人 → 私聊 + 电话加急（推荐）；
+ * 1. 配了 App 凭据 + 接收人 → 私聊 + 加急（FEISHU_URGENT=auto：电话优先、失败降级应用内加急）；
  * 2. 仅配 Webhook → 发群消息（无加急）；
  * 3. 都未配 → 抛错提示。
  */
@@ -133,24 +180,35 @@ export async function sendMoveReminder(text) {
   const appId = env('FEISHU_APP_ID');
   const receiveId = env('FEISHU_RECEIVE_ID');
   const webhookUrl = env('FEISHU_WEBHOOK_URL');
-  const urgent = env('FEISHU_URGENT') || 'phone';
+  const urgent = env('FEISHU_URGENT') || 'auto';
 
   if (appId && receiveId) {
     const token = await getTenantAccessToken();
     const receiveIdType = env('FEISHU_RECEIVE_ID_TYPE') || 'open_id';
     const messageId = await sendAppMessage(token, receiveId, text, receiveIdType);
 
-    let urgentResult = 'none';
+    let urgentResult = { type: 'none', fallback: false };
     if (urgent !== 'none') {
-      await applyUrgent(token, messageId, receiveId, urgent, receiveIdType);
-      urgentResult = urgent;
+      try {
+        urgentResult = await applyUrgentWithFallback(token, messageId, receiveId, urgent, receiveIdType);
+      } catch (err) {
+        // 加急失败不阻塞：消息已成功发出，仅记录错误并返回给前端展示
+        urgentResult = { type: 'none', fallback: false, error: err.message };
+      }
     }
-    return { via: 'app', urgent: urgentResult, messageId };
+
+    return {
+      via: 'app',
+      urgent: urgentResult.type,
+      urgentFallback: urgentResult.fallback || false,
+      urgentError: urgentResult.error || null,
+      messageId,
+    };
   }
 
   if (webhookUrl) {
     await sendViaWebhook(text);
-    return { via: 'webhook', urgent: 'none' };
+    return { via: 'webhook', urgent: 'none', urgentFallback: false, urgentError: null };
   }
 
   throw new Error(

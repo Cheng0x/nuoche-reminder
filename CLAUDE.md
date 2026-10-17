@@ -20,7 +20,7 @@ server/index.js  ──►  server/feishu.js
         │                    ├─ sendViaWebhook()      (自定义机器人，发群)
         │                    ├─ getTenantAccessToken()
         │                    ├─ sendAppMessage()      (im/v1/messages 私聊)
-        │                    └─ applyUrgent()         (urgent_phone 电话加急)
+        │                    └─ applyUrgentWithFallback()  (电话优先→降级应用内加急)
         ▼
 飞书：Webhook 或 Open API
 ```
@@ -39,6 +39,8 @@ server/index.js  ──►  server/feishu.js
 ### 降级策略
 
 `sendMoveReminder()` 依次尝试：App 私聊+加急 → Webhook 发群 → 抛「飞书未配置」错误。前端 `/api/send` 未配置时返回 `503`，前端以 toast 提示，不静默失败。
+
+**加急降级（`applyUrgentWithFallback`）**：`FEISHU_URGENT=auto`（默认）时，先尝试 `urgent_phone` 电话加急，失败（如额度超限 `230024`）自动降级 `urgent_app` 应用内加急（免费无限）。加急失败**不阻塞消息送达**，仅在返回体 `urgentError` 中记录。飞书**没有查询剩余额度的 API**，故采用「失败降级」而非「查额度」。
 
 ### 话术选择状态机（`public/app.js`）
 

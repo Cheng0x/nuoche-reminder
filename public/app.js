@@ -70,11 +70,11 @@
     els.sendBtn.classList.remove('is-success');
   }
 
-  function setSuccess() {
+  function setSuccess(label) {
     els.sendBtn.disabled = false;
     els.spinner.hidden = true;
     els.sendText.hidden = false;
-    els.sendText.textContent = '已发送 · 已电话加急车主';
+    els.sendText.textContent = label || '已发送';
     els.sendBtn.classList.add('is-success');
     setTimeout(() => {
       els.sendText.textContent = '发送挪车提醒';
@@ -96,11 +96,14 @@
         throw new Error(data.error || '发送失败，请稍后重试');
       }
       setLoading(false);
-      setSuccess();
-      showToast(
-        data.urgent === 'phone' ? '已发送，并电话加急车主' : '已发送到车主飞书',
-        'success'
-      );
+      const labels = {
+        phone: '已电话加急车主',
+        app: data.urgentFallback ? '电话额度不足，已转应用内加急' : '已应用内加急车主',
+        sms: '已短信加急车主',
+      };
+      const urgentLabel = labels[data.urgent];
+      setSuccess(urgentLabel || '已发送到车主飞书');
+      showToast(urgentLabel ? `已发送，${urgentLabel}` : '已发送到车主飞书', 'success');
     } catch (err) {
       setLoading(false);
       showToast(err.message || '发送失败，请稍后重试', 'error');

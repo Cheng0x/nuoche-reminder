@@ -70,12 +70,15 @@ FEISHU_APP_ID=
 FEISHU_APP_SECRET=
 FEISHU_RECEIVE_ID=          # 车主 open_id / user_id / 手机号
 FEISHU_RECEIVE_ID_TYPE=open_id   # open_id | user_id | chat_id
-FEISHU_URGENT=phone         # phone=电话加急 | sms=短信加急 | app=应用内加急 | none=不加急
+FEISHU_URGENT=auto          # auto=电话优先，额度不足自动降级应用内加急(免费) | phone/sms/app/none
 ```
 
-**发送流程**：应用给车主发私聊文本 → 拿到 `message_id` → 调用 `PATCH /im/v1/messages/:message_id/urgent_phone`（`user_id_type=open_id`，`user_id_list=[车主]`）触发电话加急。
+**发送流程**：应用给车主发私聊文本 → 拿到 `message_id` → 按 `FEISHU_URGENT` 加急：
 
-> ⚠️ 电话加急会消耗企业「短信/电话加急」额度（管理后台 → 费用中心 → 权益数据 可查）。加急仅对**机器人自己发送**的消息生效，且目标用户需在应用可用范围内。
+- `auto`（默认）：先 `PATCH .../urgent_phone` **电话加急**；若额度不足（错误码 `230024`）或失败，**自动降级** `PATCH .../urgent_app` **应用内加急**（免费无限）。
+- `phone` / `sms` / `app` / `none`：固定策略，失败仅在返回中标记 `urgentError`，不影响消息送达。
+
+> ⚠️ 电话加急会消耗企业「短信/电话加急」额度（管理后台 → 费用中心 → 权益数据 可查，**无查询 API**，所以用「失败自动降级」而非查额度）。应用内加急免费。加急仅对**机器人自己发送**的消息生效，且目标用户需在应用可用范围内。
 
 ## 🎨 自定义
 
@@ -116,11 +119,14 @@ nuoche-reminder/
 // 请求
 { "text": "麻烦挪一下车" }
 
-// 成功（自建应用 + 电话加急）
-{ "ok": true, "via": "app", "urgent": "phone", "messageId": "om_xxx" }
+// 成功（自建应用，auto：电话加急）
+{ "ok": true, "via": "app", "urgent": "phone", "urgentFallback": false, "urgentError": null, "messageId": "om_xxx" }
+
+// 成功（自建应用，auto：额度不足自动降级应用内加急）
+{ "ok": true, "via": "app", "urgent": "app", "urgentFallback": true, "urgentError": null, "messageId": "om_xxx" }
 
 // 成功（仅 Webhook）
-{ "ok": true, "via": "webhook", "urgent": "none" }
+{ "ok": true, "via": "webhook", "urgent": "none", "urgentFallback": false, "urgentError": null }
 
 // 失败
 { "ok": false, "error": "飞书未配置：…" }   // HTTP 503/502/400
