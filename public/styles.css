@@ -665,3 +665,10 @@ body {
   -webkit-backdrop-filter: blur(6px);
   background: rgba(0, 0, 0, 0.28);
 }
+
+.modal__hint {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-sub);
+}
